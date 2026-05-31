@@ -1,0 +1,1479 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Space-Time Simulator — Rapport de Projet</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&family=Space+Mono:wght@400;700&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
+
+:root {
+  --bg:       #050d1a;
+  --surface:  #0a1628;
+  --border:   rgba(0,180,255,0.15);
+  --accent:   #00d4ff;
+  --gold:     #ffd060;
+  --purple:   #a855f7;
+  --green:    #22d3a0;
+  --red:      #ff4060;
+  --text:     #c8dff0;
+  --muted:    rgba(160,200,224,0.45);
+  --white:    #f0f8ff;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+/* ── COVER PAGE ───────────────────────── */
+.cover {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  padding: 60px 40px;
+  text-align: center;
+}
+
+.cover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 40%,
+      rgba(0,100,200,0.15) 0%,
+      transparent 70%),
+    radial-gradient(ellipse 40% 40% at 20% 80%,
+      rgba(100,0,200,0.08) 0%,
+      transparent 60%);
+}
+
+/* Animated grid background */
+.grid-bg {
+  position: absolute;
+  inset: 0;
+  opacity: 0.08;
+  background-image:
+    linear-gradient(rgba(0,212,255,0.5) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,212,255,0.5) 1px, transparent 1px);
+  background-size: 50px 50px;
+  animation: gridMove 20s linear infinite;
+}
+
+@keyframes gridMove {
+  0%   { transform: perspective(500px) rotateX(30deg) translateY(0); }
+  100% { transform: perspective(500px) rotateX(30deg) translateY(50px); }
+}
+
+.cover-content { position: relative; z-index: 1; max-width: 800px; }
+
+.cover-badge {
+  display: inline-block;
+  border: 1px solid rgba(0,212,255,0.3);
+  color: var(--accent);
+  font-family: 'Space Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.3em;
+  padding: 6px 20px;
+  border-radius: 50px;
+  margin-bottom: 32px;
+  text-transform: uppercase;
+}
+
+.cover h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-weight: 700;
+  color: var(--white);
+  line-height: 1.1;
+  margin-bottom: 8px;
+}
+
+.cover h1 span {
+  color: var(--accent);
+  font-style: italic;
+}
+
+.cover-subtitle {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.85rem;
+  color: var(--muted);
+  letter-spacing: 0.2em;
+  margin: 20px 0 40px;
+  text-transform: uppercase;
+}
+
+.cover-meta {
+  display: flex;
+  gap: 40px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 50px;
+}
+
+.meta-item {
+  text-align: center;
+}
+
+.meta-label {
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.meta-value {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.9rem;
+  color: var(--accent);
+}
+
+.cover-equation {
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem;
+  font-style: italic;
+  color: rgba(0,212,255,0.3);
+  margin-top: 60px;
+  letter-spacing: 0.1em;
+}
+
+/* ── LAYOUT ──────────────────────────── */
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 40px 80px;
+}
+
+/* ── CHAPTER DIVIDER ─────────────────── */
+.chapter {
+  margin: 80px 0 0;
+  padding-top: 60px;
+  border-top: 1px solid var(--border);
+}
+
+.chapter-num {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.4em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.chapter h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem;
+  color: var(--white);
+  margin-bottom: 6px;
+  line-height: 1.2;
+}
+
+.chapter-en {
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-style: italic;
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid rgba(0,212,255,0.08);
+}
+
+/* ── SECTIONS ────────────────────────── */
+h3 {
+  font-size: 1.1rem;
+  color: var(--gold);
+  margin: 36px 0 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+h3::before {
+  content: '';
+  display: inline-block;
+  width: 3px;
+  height: 1.1em;
+  background: var(--gold);
+  border-radius: 2px;
+}
+
+h4 {
+  font-size: 0.9rem;
+  color: var(--accent);
+  margin: 24px 0 8px;
+  font-family: 'Space Mono', monospace;
+  letter-spacing: 0.05em;
+}
+
+p {
+  margin-bottom: 16px;
+  color: var(--text);
+}
+
+/* ── BILINGUAL BOXES ─────────────────── */
+.bilingual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 24px 0;
+}
+
+.lang-fr, .lang-en {
+  padding: 20px 24px;
+  background: var(--surface);
+}
+
+.lang-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.lang-fr .lang-label {
+  background: rgba(0,100,255,0.15);
+  color: #6699ff;
+}
+
+.lang-en .lang-label {
+  background: rgba(255,100,0,0.15);
+  color: #ffaa66;
+}
+
+.lang-fr p, .lang-en p {
+  font-size: 0.88rem;
+  margin: 0;
+  line-height: 1.7;
+}
+
+/* ── INFO BOXES ──────────────────────── */
+.box {
+  border-radius: 8px;
+  padding: 20px 24px;
+  margin: 20px 0;
+  border-left: 3px solid;
+}
+
+.box-info {
+  background: rgba(0,150,255,0.06);
+  border-color: var(--accent);
+}
+
+.box-warn {
+  background: rgba(255,208,96,0.06);
+  border-color: var(--gold);
+}
+
+.box-success {
+  background: rgba(34,211,160,0.06);
+  border-color: var(--green);
+}
+
+.box-physics {
+  background: rgba(168,85,247,0.06);
+  border-color: var(--purple);
+}
+
+.box-title {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+
+.box-info .box-title    { color: var(--accent);  }
+.box-warn .box-title    { color: var(--gold);    }
+.box-success .box-title { color: var(--green);   }
+.box-physics .box-title { color: var(--purple);  }
+
+.box p { font-size: 0.88rem; margin: 0; }
+
+/* ── CODE BLOCKS ─────────────────────── */
+.code-block {
+  background: #020810;
+  border: 1px solid rgba(0,212,255,0.1);
+  border-radius: 8px;
+  padding: 20px 24px;
+  margin: 16px 0;
+  overflow-x: auto;
+}
+
+.code-block pre {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.78rem;
+  color: #88ccff;
+  line-height: 1.6;
+}
+
+.code-comment { color: rgba(100,150,200,0.5); }
+.code-keyword { color: #ff79c6; }
+.code-string  { color: #f1fa8c; }
+.code-number  { color: #bd93f9; }
+.code-func    { color: #50fa7b; }
+
+/* ── FORMULA ─────────────────────────── */
+.formula {
+  text-align: center;
+  padding: 28px;
+  margin: 24px 0;
+  background: rgba(0,10,30,0.6);
+  border: 1px solid rgba(0,212,255,0.15);
+  border-radius: 8px;
+}
+
+.formula-main {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.2rem;
+  font-style: italic;
+  color: var(--white);
+  margin-bottom: 12px;
+}
+
+.formula-desc {
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-family: 'Space Mono', monospace;
+}
+
+/* ── GRID VISUAL ─────────────────────── */
+.grid-viz {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.grid-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+}
+
+.grid-card-icon {
+  font-size: 2rem;
+  margin-bottom: 10px;
+  display: block;
+}
+
+.grid-card-title {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.grid-card p {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+/* ── TIMELINE ────────────────────────── */
+.timeline {
+  position: relative;
+  padding-left: 32px;
+  margin: 24px 0;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(
+    to bottom,
+    var(--accent),
+    var(--purple),
+    transparent);
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 28px;
+}
+
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -28px;
+  top: 6px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--bg);
+}
+
+.timeline-phase {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.timeline-title {
+  font-size: 0.95rem;
+  color: var(--white);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.timeline-desc {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+/* ── TABLE ───────────────────────────── */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  font-size: 0.85rem;
+}
+
+th {
+  background: rgba(0,212,255,0.08);
+  color: var(--accent);
+  font-family: 'Space Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid rgba(0,212,255,0.2);
+}
+
+td {
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(0,212,255,0.06);
+  color: var(--text);
+  vertical-align: top;
+}
+
+tr:hover td {
+  background: rgba(0,212,255,0.03);
+}
+
+/* ── COMPARISON ──────────────────────── */
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.compare-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.compare-card h4 {
+  margin: 0 0 12px;
+  font-size: 0.8rem;
+}
+
+.compare-card ul {
+  list-style: none;
+  font-size: 0.82rem;
+}
+
+.compare-card li {
+  padding: 4px 0;
+  color: var(--muted);
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.compare-card li::before {
+  content: '→';
+  color: var(--accent);
+  flex-shrink: 0;
+  font-family: 'Space Mono', monospace;
+}
+
+/* ── OBJECTS TABLE ───────────────────── */
+.obj-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(0,212,255,0.06);
+}
+
+.obj-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.obj-info { flex: 1; }
+.obj-name {
+  font-weight: 600;
+  color: var(--white);
+  font-size: 0.9rem;
+}
+
+.obj-desc {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.obj-stats {
+  text-align: right;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.7rem;
+}
+
+.obj-masse { color: var(--gold); }
+.obj-rayon { color: var(--green); }
+
+/* ── CONCLUSION ──────────────────────── */
+.conclusion {
+  background: linear-gradient(
+    135deg,
+    rgba(0,40,80,0.6),
+    rgba(20,0,60,0.4));
+  border: 1px solid rgba(0,212,255,0.2);
+  border-radius: 12px;
+  padding: 40px;
+  margin-top: 60px;
+  text-align: center;
+}
+
+.conclusion h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.8rem;
+  color: var(--white);
+  margin-bottom: 16px;
+}
+
+.conclusion p {
+  font-size: 0.9rem;
+  color: var(--muted);
+  max-width: 600px;
+  margin: 0 auto 12px;
+}
+
+/* ── FOOTER ──────────────────────────── */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 30px 40px;
+  text-align: center;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  margin-top: 60px;
+}
+
+/* ── PRINT ───────────────────────────── */
+@media print {
+  body { background: white; color: #222; }
+  .cover::before, .grid-bg { display: none; }
+  .cover { background: #f5f8ff; min-height: auto; padding: 40px; }
+  .cover h1 { color: #111; }
+  .chapter { page-break-before: always; }
+}
+
+/* ── RESPONSIVE ──────────────────────── */
+@media (max-width: 700px) {
+  .bilingual  { grid-template-columns: 1fr; }
+  .compare    { grid-template-columns: 1fr; }
+  .grid-viz   { grid-template-columns: 1fr 1fr; }
+  .container  { padding: 0 20px 60px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     COVER PAGE
+══════════════════════════════════════ -->
+<div class="cover">
+  <div class="grid-bg"></div>
+  <div class="cover-content">
+
+    <div class="cover-badge">Rapport de Projet · Project Report</div>
+
+    <h1>Space-Time<br><span>Simulator</span></h1>
+
+    <p class="cover-subtitle">
+      Simulation de la Relativité Générale d'Einstein<br>
+      Einstein's General Relativity Simulation
+    </p>
+
+    <p style="max-width:520px;margin:0 auto;color:var(--muted);font-size:0.88rem;">
+      Un projet éducatif complet : de la théorie physique
+      à la simulation interactive en C++ et WebGL.<br>
+      <em style="font-size:0.8rem;">A complete educational project: from physical theory
+      to interactive simulation in C++ and WebGL.</em>
+    </p>
+
+    <div class="cover-meta">
+      <div class="meta-item">
+        <div class="meta-label">Auteur / Author</div>
+        <div class="meta-value">Aissa</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Technologies</div>
+        <div class="meta-value">C++ · OpenGL · WebGL</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Durée / Duration</div>
+        <div class="meta-value">~8 semaines</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Niveau / Level</div>
+        <div class="meta-value">Débutant → Intermédiaire</div>
+      </div>
+    </div>
+
+    <div class="cover-equation">E = mc²</div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ══════════════════════════════════════
+     CHAPITRE 1 : INTRODUCTION
+══════════════════════════════════════ -->
+<div class="chapter">
+  <div class="chapter-num">Chapitre 01 · Chapter 01</div>
+  <h2>Introduction au Projet</h2>
+  <p class="chapter-en">Introduction to the Project</p>
+
+  <div class="bilingual">
+    <div class="lang-fr">
+      <span class="lang-label">🇫🇷 Français</span>
+      <p>Ce projet est une simulation interactive de la
+      <strong>courbure de l'espace-temps</strong> telle que
+      décrite par Albert Einstein dans sa théorie de la
+      Relativité Générale (1915). L'objectif est de rendre
+      visible et compréhensible un concept fondamental
+      de la physique moderne.</p>
+    </div>
+    <div class="lang-en">
+      <span class="lang-label">🇬🇧 English</span>
+      <p>This project is an interactive simulation of
+      <strong>spacetime curvature</strong> as described by
+      Albert Einstein in his theory of General Relativity
+      (1915). The goal is to make a fundamental concept
+      of modern physics visible and understandable.</p>
+    </div>
+  </div>
+
+  <div class="box box-info">
+    <div class="box-title">🎯 Objectif principal · Main Objective</div>
+    <p>Visualiser en temps réel comment une masse déforme l'espace-temps autour d'elle,
+    exactement comme une boule de bowling posée sur un drap tendu crée une dépression.
+    <br><em>Visualize in real time how mass deforms spacetime around it,
+    exactly like a bowling ball placed on a stretched sheet creates a depression.</em></p>
+  </div>
+
+  <h3>Pourquoi ce projet ? · Why this project?</h3>
+
+  <div class="grid-viz">
+    <div class="grid-card">
+      <span class="grid-card-icon">🔭</span>
+      <div class="grid-card-title">Éducatif</div>
+      <p>Rendre la physique d'Einstein accessible à tous les étudiants</p>
+    </div>
+    <div class="grid-card">
+      <span class="grid-card-icon">💻</span>
+      <div class="grid-card-title">Technique</div>
+      <p>Apprendre le C++, OpenGL, et le développement web moderne</p>
+    </div>
+    <div class="grid-card">
+      <span class="grid-card-icon">🎮</span>
+      <div class="grid-card-title">Interactif</div>
+      <p>Explorer la gravité en plaçant des objets et observant les effets</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     CHAPITRE 2 : PHYSIQUE D'EINSTEIN
+══════════════════════════════════════ -->
+<div class="chapter">
+  <div class="chapter-num">Chapitre 02 · Chapter 02</div>
+  <h2>La Physique d'Einstein</h2>
+  <p class="chapter-en">Einstein's Physics — The Theory Behind the Simulation</p>
+
+  <h3>Relativité Spéciale vs Générale</h3>
+
+  <div class="compare">
+    <div class="compare-card">
+      <h4>⚡ Relativité Spéciale (1905)</h4>
+      <ul>
+        <li>Concerne les objets qui se déplacent très vite</li>
+        <li>Plus tu vas vite, plus le temps ralentit</li>
+        <li>Rien ne peut aller plus vite que la lumière</li>
+        <li>La masse et l'énergie sont équivalentes : E = mc²</li>
+        <li>Exemple : les horloges des satellites GPS avancent différemment</li>
+      </ul>
+    </div>
+    <div class="compare-card">
+      <h4>🌌 Relativité Générale (1915)</h4>
+      <ul>
+        <li>Concerne la gravité et les objets massifs</li>
+        <li>La masse <em>courbe</em> l'espace-temps</li>
+        <li>La gravité n'est pas une "force" mais une courbure</li>
+        <li>Prédit les trous noirs et ondes gravitationnelles</li>
+        <li>Exemple : notre simulation ! La grille qui se déforme</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="box box-physics">
+    <div class="box-title">🧠 En termes simples · In simple terms</div>
+    <p>
+      <strong>Spéciale :</strong> La vitesse déforme le temps.<br>
+      <strong>Générale :</strong> La masse déforme l'espace ET le temps.<br><br>
+      <em><strong>Special:</strong> Speed warps time.<br>
+      <strong>General:</strong> Mass warps space AND time.</em>
+    </p>
+  </div>
+
+  <h3>La Courbure de l'Espace-Temps</h3>
+
+  <div class="bilingual">
+    <div class="lang-fr">
+      <span class="lang-label">🇫🇷 Français</span>
+      <p>Imaginez l'espace-temps comme un grand drap élastique tendu dans l'espace.
+      Quand vous posez une bille dessus, le drap se creuse. Plus la bille est lourde,
+      plus le creux est profond. C'est exactement ce que fait une étoile ou un trou
+      noir avec l'espace-temps réel — il le courbe, et les autres objets "tombent"
+      dans cette courbure, ce qu'on appelle la gravité.</p>
+    </div>
+    <div class="lang-en">
+      <span class="lang-label">🇬🇧 English</span>
+      <p>Imagine spacetime as a large elastic sheet stretched in space.
+      When you place a marble on it, the sheet bends. The heavier the marble,
+      the deeper the dent. This is exactly what a star or black hole does
+      to real spacetime — it curves it, and other objects "fall" into this
+      curvature, which we call gravity.</p>
+    </div>
+  </div>
+
+  <h3>La Métrique de Schwarzschild</h3>
+
+  <p>La formule qui décrit la courbure autour d'un objet massif sphérique :</p>
+
+  <div class="formula">
+    <div class="formula-main">ds² = -(1 - r<sub>s</sub>/r)c²dt² + dr²/(1-r<sub>s</sub>/r) + r²dΩ²</div>
+    <div class="formula-desc">
+      r<sub>s</sub> = rayon de Schwarzschild · c = vitesse de la lumière · r = distance au centre
+    </div>
+  </div>
+
+  <div class="formula">
+    <div class="formula-main">r<sub>s</sub> = 2GM/c²</div>
+    <div class="formula-desc">
+      G = constante gravitationnelle · M = masse de l'objet · c = vitesse de la lumière
+    </div>
+  </div>
+
+  <div class="box box-warn">
+    <div class="box-title">💡 Ce que ça signifie · What it means</div>
+    <p>
+      Le <strong>rayon de Schwarzschild</strong> est la distance à partir de laquelle
+      même la lumière ne peut plus s'échapper — c'est l'horizon d'événements d'un trou noir.
+      Pour le Soleil, ce rayon est d'environ <strong>3 km</strong> (le Soleil mesure 696 000 km !).
+      <br><br>
+      <em>The <strong>Schwarzschild radius</strong> is the distance from which even light
+      cannot escape — it's the event horizon of a black hole.
+      For the Sun, this radius is about <strong>3 km</strong> (the Sun is 696,000 km!).</em>
+    </p>
+  </div>
+
+  <h3>La Dilatation Temporelle Gravitationnelle</h3>
+
+  <div class="formula">
+    <div class="formula-main">Δτ = Δt × √(1 - r<sub>s</sub>/r)</div>
+    <div class="formula-desc">
+      Δτ = temps ressenti près de la masse · Δt = temps loin de la masse
+    </div>
+  </div>
+
+  <div class="box box-physics">
+    <div class="box-title">⏰ Explication · Explanation</div>
+    <p>
+      Plus vous êtes proche d'un objet massif, plus le temps s'écoule lentement pour vous !
+      Un astronaute proche d'un trou noir vieillit moins vite qu'un astronaute loin dans l'espace.
+      Ce n'est pas de la science-fiction — c'est un fait mesuré expérimentalement.
+      <br><br>
+      <em>The closer you are to a massive object, the slower time flows for you!
+      An astronaut near a black hole ages more slowly than one far away in space.
+      This is not science fiction — it's an experimentally verified fact.</em>
+    </p>
+  </div>
+
+  <h3>Les Trous Noirs</h3>
+
+  <div class="bilingual">
+    <div class="lang-fr">
+      <span class="lang-label">🇫🇷 Français</span>
+      <p>Un trou noir se forme quand une étoile très massive s'effondre sur elle-même.
+      Sa masse devient si concentrée que la courbure de l'espace-temps devient infinie
+      en un point : c'est la <strong>singularité</strong>. La frontière autour de laquelle
+      même la lumière ne peut s'échapper s'appelle l'<strong>horizon d'événements</strong>.</p>
+    </div>
+    <div class="lang-en">
+      <span class="lang-label">🇬🇧 English</span>
+      <p>A black hole forms when a very massive star collapses in on itself.
+      Its mass becomes so concentrated that the curvature of spacetime becomes
+      infinite at one point: this is the <strong>singularity</strong>. The boundary
+      around which even light cannot escape is called the <strong>event horizon</strong>.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     CHAPITRE 3 : TECHNOLOGIES
+══════════════════════════════════════ -->
+<div class="chapter">
+  <div class="chapter-num">Chapitre 03 · Chapter 03</div>
+  <h2>Technologies Utilisées</h2>
+  <p class="chapter-en">Technologies Used</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Outil · Tool</th>
+        <th>Rôle · Role</th>
+        <th>Version</th>
+        <th>Pourquoi · Why</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>C++</strong></td>
+        <td>Langage de programmation principal</td>
+        <td>C++17</td>
+        <td>Performant, contrôle total du matériel</td>
+      </tr>
+      <tr>
+        <td><strong>OpenGL</strong></td>
+        <td>API graphique 3D (version bureau)</td>
+        <td>3.3 Core</td>
+        <td>Standard industrie pour la 3D temps réel</td>
+      </tr>
+      <tr>
+        <td><strong>GLFW</strong></td>
+        <td>Création de fenêtres et gestion clavier/souris</td>
+        <td>3.x</td>
+        <td>Simple et portable (Windows/Mac/Linux)</td>
+      </tr>
+      <tr>
+        <td><strong>GLAD</strong></td>
+        <td>Chargeur des fonctions OpenGL</td>
+        <td>GL 3.3</td>
+        <td>Accès aux fonctions modernes d'OpenGL</td>
+      </tr>
+      <tr>
+        <td><strong>GLM</strong></td>
+        <td>Bibliothèque mathématique 3D</td>
+        <td>0.9.x</td>
+        <td>Matrices, vecteurs, transformations 3D</td>
+      </tr>
+      <tr>
+        <td><strong>stb_truetype</strong></td>
+        <td>Rendu de texte en OpenGL</td>
+        <td>1.x</td>
+        <td>Un seul fichier header, très simple</td>
+      </tr>
+      <tr>
+        <td><strong>WebGL</strong></td>
+        <td>API graphique 3D (version web)</td>
+        <td>WebGL 1.0</td>
+        <td>Fonctionne directement dans le navigateur</td>
+      </tr>
+      <tr>
+        <td><strong>HTML/CSS/JS</strong></td>
+        <td>Interface web</td>
+        <td>HTML5</td>
+        <td>Interface professionnelle, accessible partout</td>
+      </tr>
+      <tr>
+        <td><strong>Git + GitHub</strong></td>
+        <td>Versionnement et partage du code</td>
+        <td>2.54</td>
+        <td>Sauvegarde, collaboration, publication</td>
+      </tr>
+      <tr>
+        <td><strong>VS Code</strong></td>
+        <td>Éditeur de code</td>
+        <td>Latest</td>
+        <td>Interface moderne, extensions puissantes</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Architecture du Projet</h3>
+
+  <div class="code-block">
+    <pre>
+<span class="code-comment">// Structure des fichiers · File structure</span>
+
+simulation-gravity/
+├── <span class="code-string">src/</span>
+│   └── main.cpp          <span class="code-comment">// Version C++ complète</span>
+│
+├── <span class="code-string">include/</span>
+│   ├── glad/glad.h       <span class="code-comment">// Chargeur OpenGL</span>
+│   ├── GLFW/glfw3.h      <span class="code-comment">// Gestion fenêtre</span>
+│   ├── KHR/              <span class="code-comment">// Extensions Khronos</span>
+│   ├── glm/              <span class="code-comment">// Mathématiques 3D</span>
+│   └── stb_truetype.h    <span class="code-comment">// Rendu texte</span>
+│
+├── <span class="code-string">lib/</span>
+│   └── libglfw3.a        <span class="code-comment">// Bibliothèque compilée</span>
+│
+├── <span class="code-string">Version Web/</span>
+│   ├── index.html        <span class="code-comment">// Page principale</span>
+│   ├── style.css         <span class="code-comment">// Design et mise en page</span>
+│   ├── shaders.js        <span class="code-comment">// Shaders + matrices WebGL</span>
+│   └── simulation.js     <span class="code-comment">// Physique + rendu 3D</span>
+│
+├── arial.ttf             <span class="code-comment">// Police d'écriture</span>
+├── einstein.jpg          <span class="code-comment">// Portrait d'Einstein</span>
+└── gravity.exe           <span class="code-comment">// Exécutable compilé</span>
+    </pre>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     CHAPITRE 4 : CONCEPTS OPENGL
+══════════════════════════════════════ -->
+<div class="chapter">
+  <div class="chapter-num">Chapitre 04 · Chapter 04</div>
+  <h2>Concepts OpenGL Expliqués</h2>
+  <p class="chapter-en">OpenGL Concepts Explained — For Beginners</p>
+
+  <h3>Comment OpenGL Dessine ?</h3>
+
+  <div class="bilingual">
+    <div class="lang-fr">
+      <span class="lang-label">🇫🇷 Français</span>
+      <p>OpenGL ne peut dessiner que 3 formes de base :
+      un <strong>point</strong>, une <strong>ligne</strong>,
+      et un <strong>triangle</strong>. Tout le reste — cube, sphère,
+      grille — est construit en combinant ces formes primitives.</p>
+    </div>
+    <div class="lang-en">
+      <span class="lang-label">🇬🇧 English</span>
+      <p>OpenGL can only draw 3 basic shapes:
+      a <strong>point</strong>, a <strong>line</strong>,
+      and a <strong>triangle</strong>. Everything else — cube, sphere,
+      grid — is built by combining these primitive shapes.</p>
+    </div>
+  </div>
+
+  <h3>Les Shaders</h3>
+
+  <div class="box box-info">
+    <div class="box-title">🎨 Qu'est-ce qu'un shader ?</div>
+    <p>
+      Un shader est un <strong>mini-programme</strong> qui s'exécute directement
+      sur la carte graphique (GPU). Il existe deux types principaux :<br><br>
+      • <strong>Vertex Shader</strong> : "Où placer ce point dans l'espace 3D ?"<br>
+      • <strong>Fragment Shader</strong> : "Quelle couleur donner à ce pixel ?"<br><br>
+      <em>A shader is a <strong>mini-program</strong> that runs directly on the graphics
+      card (GPU). There are two main types:<br>
+      • <strong>Vertex Shader</strong>: "Where to place this point in 3D space?"<br>
+      • <strong>Fragment Shader</strong>: "What color to give this pixel?"</em>
+    </p>
+  </div>
+
+  <div class="code-block">
+    <pre>
+<span class="code-comment">// Vertex Shader — positionne chaque point</span>
+<span class="code-keyword">const char</span>* vertexShader = <span class="code-string">R"(
+    #version 330 core
+    layout (location = 0) in vec3 position;
+    uniform mat4 MVP;
+    void main() {
+        gl_Position = MVP * vec4(position, 1.0);
+    }
+)"</span>;
+
+<span class="code-comment">// Fragment Shader — colorie chaque pixel</span>
+<span class="code-keyword">const char</span>* fragmentShader = <span class="code-string">R"(
+    #version 330 core
+    uniform vec3 couleur;
+    out vec4 fragColor;
+    void main() {
+        fragColor = vec4(couleur, 1.0);
+    }
+)"</span>;
+    </pre>
+  </div>
+
+  <h3>La Matrice MVP</h3>
+
+  <div class="box box-physics">
+    <div class="box-title">📐 Model · View · Projection</div>
+    <p>
+      Pour afficher un objet 3D sur un écran 2D, on applique 3 transformations :<br><br>
+      • <strong>Model</strong> : position/rotation de l'objet dans le monde<br>
+      • <strong>View</strong> : position et orientation de la caméra<br>
+      • <strong>Projection</strong> : perspective (objets lointains = plus petits)<br><br>
+      <strong>Résultat :</strong> MVP = Projection × View × Model<br><br>
+      <em>To display a 3D object on a 2D screen, 3 transformations are applied:<br>
+      Model (object position), View (camera), Projection (perspective).</em>
+    </p>
+  </div>
+
+  <h3>VAO, VBO, EBO</h3>
+
+  <table>
+    <thead>
+      <tr><th>Objet</th><th>Nom complet</th><th>Rôle</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>VBO</strong></td>
+        <td>Vertex Buffer Object</td>
+        <td>Stocke les coordonnées (x,y,z) de chaque point sur le GPU</td>
+      </tr>
+      <tr>
+        <td><strong>VAO</strong></td>
+        <td>Vertex Array Object</td>
+        <td>Mode d'emploi : explique comment lire les données du VBO</td>
+      </tr>
+      <tr>
+        <td><strong>EBO</strong></td>
+        <td>Element Buffer Object</td>
+        <td>Indices : indique dans quel ordre relier les points entre eux</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Le Ray Casting</h3>
+
+  <div class="bilingual">
+    <div class="lang-fr">
+      <span class="lang-label">🇫🇷 Français</span>
+      <p>Pour placer un objet précisément où on clique dans une scène 3D,
+      on utilise le <strong>Ray Casting</strong> : on lance un "rayon"
+      depuis la caméra à travers le pixel cliqué, et on calcule
+      où ce rayon touche la grille (plan Y=0).</p>
+    </div>
+    <div class="lang-en">
+      <span class="lang-label">🇬🇧 English</span>
+      <p>To place an object precisely where you click in a 3D scene,
+      we use <strong>Ray Casting</strong>: we cast a "ray" from the camera
+      through the clicked pixel, and calculate where this ray hits
+      the grid (plane Y=0).</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     CHAPITRE 5 : PHYSIQUE SIMULÉE
+══════════════════════════════════════ -->
+<div class="chapter">
+  <div class="chapter-num">Chapitre 05 · Chapter 05</div>
+  <h2>La Physique Simulée</h2>
+  <p class="chapter-en">Simulated Physics — From Newton to Einstein</p>
+
+  <h3>La Loi de Newton (base)</h3>
+
+  <div class="formula">
+    <div class="formula-main">F = G × M₁ × M₂ / d²</div>
+    <div class="formula-desc">
+      F = force · G = constante gravitationnelle ·
+      M₁, M₂ = masses · d = distance
+    </div>
+  </div>
+
+  <div class="box box-warn">
+    <div class="box-title">💡 Ce que ça veut dire</div>
+    <p>
+      • Plus les masses sont grandes → plus l'attraction est forte<br>
+      • Plus la distance est grande → plus l'attraction est faible (divisée par d²)<br>
+      • Les deux objets s'attirent mutuellement avec la même force<br><br>
+      <em>• Larger masses → stronger attraction<br>
+      • Greater distance → weaker attraction (divided by d²)<br>
+      • Both objects attract each other with the same force</em>
+    </p>
+  </div>
+
+  <h3>Correction Post-Newtonienne (Einstein)</h3>
+
+  <div class="formula">
+    <div class="formula-main">a = -GM/r² × [1 + (r<sub>s</sub>/r)(4 + v²/c²)]</div>
+    <div class="formula-desc">
+      Correction du 1er ordre de la Relativité Générale (1PN)
+    </div>
+  </div>
+
+  <h3>L'Intégration Runge-Kutta 4</h3>
+
+  <div class="bilingual">
+    <div class="lang-fr">
+      <span class="lang-label">🇫🇷 Français</span>
+      <p>Pour simuler le mouvement avec précision, on utilise la méthode
+      <strong>Runge-Kutta d'ordre 4 (RK4)</strong>. C'est une méthode
+      numérique qui calcule la position future d'un objet en faisant
+      4 estimations successives, ce qui donne des orbites stables
+      et précises même avec de grands pas de temps.</p>
+    </div>
+    <div class="lang-en">
+      <span class="lang-label">🇬🇧 English</span>
+      <p>To simulate motion accurately, we use the
+      <strong>4th-order Runge-Kutta method (RK4)</strong>. This is a
+      numerical method that calculates the future position of an object
+      by making 4 successive estimates, giving stable and accurate
+      orbits even with large time steps.</p>
+    </div>
+  </div>
+
+  <h3>Les Objets du Simulateur</h3>
+
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin:20px 0;">
+    <div class="obj-row">
+      <div class="obj-icon" style="background:radial-gradient(#ffdd44,#ff8800);">⭐</div>
+      <div class="obj-info">
+        <div class="obj-name">Étoile · Star</div>
+        <div class="obj-desc">Corps massif, fixe. Courbe fortement l'espace autour d'elle.</div>
+      </div>
+      <div class="obj-stats">
+        <div class="obj-masse">Masse: 0.15</div>
+        <div class="obj-rayon">Rayon: grand</div>
+      </div>
+    </div>
+    <div class="obj-row">
+      <div class="obj-icon" style="background:radial-gradient(#4488ff,#0022aa);">🪐</div>
+      <div class="obj-info">
+        <div class="obj-name">Planète · Planet</div>
+        <div class="obj-desc">Corps mobile. Attirée par les étoiles et trous noirs.</div>
+      </div>
+      <div class="obj-stats">
+        <div class="obj-masse">Masse: 0.06</div>
+        <div class="obj-rayon">Rayon: moyen</div>
+      </div>
+    </div>
+    <div class="obj-row">
+      <div class="obj-icon" style="background:radial-gradient(#220033,#000);border:1px solid #6600aa;">🌑</div>
+      <div class="obj-info">
+        <div class="obj-name">Trou Noir · Black Hole</div>
+        <div class="obj-desc">Masse extrême. Courbure infinie. Absorbe tout ce qui s'approche.</div>
+      </div>
+      <div class="obj-stats">
+        <div class="obj-masse">Masse: 0.45</div>
+        <div class="obj-rayon">Invisible !</div>
+      </div>
+    </div>
+    <div class="obj-row" style="border-bottom:none;">
+      <div class="obj-icon" style="background:radial-gradient(#886644,#443322);">🪨</div>
+      <div class="obj-info">
+        <div class="obj-name">Astéroïde · Asteroid</div>
+        <div class="obj-desc">Très léger. Fortement influencé par les corps massifs proches.</div>
+      </div>
+      <div class="obj-stats">
+        <div class="obj-masse">Masse: 0.008</div>
+        <div class="obj-rayon">Rayon: petit</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     CHAPITRE 6 : ÉTAPES DU PROJET
+══════════════════════════════════════ -->
+<div class="chapter">
+  <div class="chapter-num">Chapitre 06 · Chapter 06</div>
+  <h2>Étapes de Développement</h2>
+  <p class="chapter-en">Development Phases — Step by Step</p>
+
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="timeline-phase">Phase 01</div>
+      <div class="timeline-title">Installation des Outils · Tool Setup</div>
+      <div class="timeline-desc">Installation de g++ 15.2, MSYS2, GLFW, GLAD, GLM sur Windows.
+      Configuration du PATH et vérification des compilateurs.</div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-phase">Phase 02</div>
+      <div class="timeline-title">Première Fenêtre OpenGL · First OpenGL Window</div>
+      <div class="timeline-desc">Création d'une fenêtre GLFW, initialisation de GLAD,
+      première boucle de rendu avec fond coloré.</div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-phase">Phase 03</div>
+      <div class="timeline-title">Grille de l'Espace-Temps · Spacetime Grid</div>
+      <div class="timeline-desc">Génération d'une grille 2D cyan avec VAO/VBO/EBO.
+      Premiers shaders vertex et fragment.</div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-phase">Phase 04</div>
+      <div class="timeline-title">Déformation Gravitationnelle · Gravitational Deformation</div>
+      <div class="timeline-desc">Application de la formule de courbure à chaque point
+      de la grille. La grille se déforme autour des masses.</div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-phase">Phase 05</div>
+      <div class="timeline-title">Animation + Interface · Animation + Interface</div>
+      <div class="timeline-desc">Grille dynamique recalculée à chaque frame. Menu avec
+      4 boutons, gestion clavier/souris, portrait animé d'Einstein.</div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-phase">Phase 06</div>
+      <div class="timeline-title">Trou Noir + Disque d'Accrétion · Black Hole</div>
+      <div class="timeline-desc">Horizon d'événements, disque d'accrétion tournant,
+      étoiles d'arrière-plan, courbure extrême.</div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-phase">Phase 07</div>
+      <div class="timeline-title">Version 3D + Caméra · 3D Version + Camera</div>
+      <div class="timeline-desc">Matrices MVP avec GLM, caméra rotative, zoom,
+      Ray Casting pour placement précis des objets.</div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-phase">Phase 08</div>
+      <div class="timeline-title">Physique Réaliste · Realistic Physics</div>
+      <div class="timeline-desc">Attraction mutuelle entre tous les objets (F=GM₁M₂/d²),
+      absorption et fusion, couleurs mélangées, effets de flash.</div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-phase">Phase 09</div>
+      <div class="timeline-title">Version Web WebGL · WebGL Web Version</div>
+      <div class="timeline-desc">Portage complet en JavaScript/WebGL. Interface HTML/CSS
+      professionnelle, curseur Saturne animé, support tactile.</div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-phase">Phase 10</div>
+      <div class="timeline-title">GitHub + Publication · GitHub + Publishing</div>
+      <div class="timeline-desc">Code versionné sur GitHub. Publication sur GitHub Pages
+      pour accès mondial via navigateur.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     CHAPITRE 7 : FONCTIONNALITÉS
+══════════════════════════════════════ -->
+<div class="chapter">
+  <div class="chapter-num">Chapitre 07 · Chapter 07</div>
+  <h2>Fonctionnalités du Simulateur</h2>
+  <p class="chapter-en">Simulator Features</p>
+
+  <h3>Contrôles · Controls</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Action</th>
+        <th>Souris/Clavier · Mouse/Keyboard</th>
+        <th>Tactile/Touchpad · Touch/Touchpad</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Placer un objet</td>
+        <td>Clic gauche</td>
+        <td>Tap rapide</td>
+      </tr>
+      <tr>
+        <td>Tourner la caméra</td>
+        <td>Clic droit + glisser</td>
+        <td>1 doigt + glisser / ALT + glisser</td>
+      </tr>
+      <tr>
+        <td>Zoom</td>
+        <td>Molette souris</td>
+        <td>2 doigts pincer/écarter</td>
+      </tr>
+      <tr>
+        <td>Reset simulation</td>
+        <td>Touche R</td>
+        <td>Bouton RESET</td>
+      </tr>
+      <tr>
+        <td>Plein écran</td>
+        <td>Touche F</td>
+        <td>Touche F</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Effets Visuels · Visual Effects</h3>
+
+  <div class="grid-viz">
+    <div class="grid-card">
+      <span class="grid-card-icon">🌐</span>
+      <div class="grid-card-title">Grille 3D</div>
+      <p>Déformation en temps réel proportionnelle à la masse de chaque objet</p>
+    </div>
+    <div class="grid-card">
+      <span class="grid-card-icon">💫</span>
+      <div class="grid-card-title">Sphères 3D</div>
+      <p>Volume dynamique qui augmente lors des absorptions et fusions</p>
+    </div>
+    <div class="grid-card">
+      <span class="grid-card-icon">⚡</span>
+      <div class="grid-card-title">Flash Fusion</div>
+      <p>Effet lumineux lors des collisions entre objets</p>
+    </div>
+    <div class="grid-card">
+      <span class="grid-card-icon">🪐</span>
+      <div class="grid-card-title">Curseur Saturne</div>
+      <p>Curseur personnalisé avec anneaux animés qui suivent avec décalage</p>
+    </div>
+    <!-- <div class="grid-card">
+      <span class="grid-card-icon">🎓</span>
+      <div class="grid-card-title">Messages Éducatifs</div>
+      <p>Explications contextuelles qui apparaissent à chaque action</p>
+    </div> -->
+    <div class="grid-card">
+      <span class="grid-card-icon">🌑</span>
+      <div class="grid-card-title">Trou Noir</div>
+      <p>Anneaux de courbure lumineux, pas de sphère — l'espace seul se courbe</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     CHAPITRE 8 : CE QU'ON A APPRIS
+══════════════════════════════════════ -->
+<div class="chapter">
+  <div class="chapter-num">Chapitre 08 · Chapter 08</div>
+  <h2>Compétences Acquises</h2>
+  <p class="chapter-en">Skills Acquired Through This Project</p>
+
+  <div class="compare">
+    <div class="compare-card">
+      <h4>💻 Programmation C++</h4>
+      <ul>
+        <li>Variables, boucles, fonctions</li>
+        <li>Structures (struct) et classes</li>
+        <li>Vecteurs std::vector dynamiques</li>
+        <li>Gestion de la mémoire</li>
+        <li>Compilation avec g++ et flags</li>
+        <li>Organisation en fichiers/headers</li>
+      </ul>
+    </div>
+    <div class="compare-card">
+      <h4>🎨 OpenGL 3D</h4>
+      <ul>
+        <li>Pipeline graphique moderne</li>
+        <li>Shaders GLSL (vertex/fragment)</li>
+        <li>VAO, VBO, EBO</li>
+        <li>Matrices MVP et transformations</li>
+        <li>Rendu de texte (stb_truetype)</li>
+        <li>Animation temps réel 60 FPS</li>
+      </ul>
+    </div>
+    <div class="compare-card">
+      <h4>🌐 Développement Web</h4>
+      <ul>
+        <li>HTML5 sémantique</li>
+        <li>CSS3 animations et flexbox</li>
+        <li>JavaScript ES6+</li>
+        <li>WebGL et shaders GLSL</li>
+        <li>Canvas 2D pour animations</li>
+        <li>Gestion événements souris/tactile</li>
+      </ul>
+    </div>
+    <div class="compare-card">
+      <h4>⚛️ Physique et Mathématiques</h4>
+      <ul>
+        <li>Relativité Générale d'Einstein</li>
+        <li>Métrique de Schwarzschild</li>
+        <li>Loi de gravitation de Newton</li>
+        <li>Intégration Runge-Kutta 4</li>
+        <li>Algèbre linéaire (matrices 4×4)</li>
+        <li>Ray Casting géométrique</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="box box-success">
+    <div class="box-title">📊 En chiffres · In Numbers</div>
+    <p>
+      <strong>~1500</strong> lignes de code C++ ·
+      <strong>~700</strong> lignes JavaScript/WebGL ·
+      <strong>~300</strong> lignes HTML/CSS ·
+      <strong>30+</strong> concepts appris ·
+      <strong>10</strong> phases de développement ·
+      <strong>Niveau :</strong> Débutant → Intermédiaire
+    </p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     CONCLUSION
+══════════════════════════════════════ -->
+<div class="conclusion">
+  <h2>Conclusion</h2>
+  <p>
+    Ce projet démontre qu'il est possible de passer de zéro connaissance en C++
+    à une simulation 3D interactive et scientifiquement fondée en quelques semaines.
+  </p>
+  <p>
+    <em>This project demonstrates that it is possible to go from zero C++ knowledge
+    to a scientifically grounded interactive 3D simulation in just a few weeks.</em>
+  </p>
+  <p style="margin-top:20px;color:var(--accent);font-family:'Space Mono',monospace;font-size:0.8rem;">
+    "Imagination is more important than knowledge."<br>
+    <span style="color:var(--muted);">— Albert Einstein</span>
+  </p>
+</div>
+
+</div>
+
+<footer>
+  Space-Time Simulator · Rapport Éducatif Bilingue ·
+  Projet C++ / WebGL / Relativité Générale ·
+  github.com/aissaa7/spacetime-simulator
+</footer>
+
+</body>
+</html>

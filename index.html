@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" 
+          content="width=device-width, 
+                   initial-scale=1.0">
+    <title>Space-Time Simulator — Einstein</title>
+    <link rel="stylesheet" href="style.css">
+<meta name="viewport" 
+      content="width=device-width, 
+               initial-scale=1.0,
+               user-scalable=no">
+
+</head>
+<body>
+
+    <!-- MENU GAUCHE -->
+    <div id="menu">
+
+        <!-- Titre -->
+        <div id="titre">
+            <h1>SPACE-TIME</h1>
+            <h2>SIMULATOR</h2>
+            <p>Einstein · Relativité Générale</p>
+        </div>
+
+        <!-- Boutons objets -->
+        <div id="boutons">
+            <button class="btn-objet actif"
+                    id="btn-etoile"
+                    onclick="selectionner(0)">
+                <div class="icone etoile">★</div>
+                <span>ÉTOILE</span>
+                <small>Masse forte</small>
+            </button>
+
+            <button class="btn-objet"
+                    id="btn-planete"
+                    onclick="selectionner(1)">
+                <div class="icone planete">●</div>
+                <span>PLANÈTE</span>
+                <small>Masse moyenne</small>
+            </button>
+
+            <button class="btn-objet"
+                    id="btn-trou"
+                    onclick="selectionner(2)">
+                <div class="icone trou">◉</div>
+                <span>TROU NOIR</span>
+                <small>Masse extrême</small>
+            </button>
+
+            <button class="btn-objet"
+                    id="btn-asteroide"
+                    onclick="selectionner(3)">
+                <div class="icone asteroide">·</div>
+                <span>ASTÉROÏDE</span>
+                <small>Masse légère</small>
+            </button>
+        </div>
+
+        <!-- Instructions -->
+       <div id="instructions">
+    <p>🖱️ <b>Clic gauche</b> → placer</p>
+    <p>🖱️ <b>Clic droit</b> → tourner</p>
+    <p>🖱️ <b>Scroll</b> → zoom</p>
+    <p>⌨️ <b>ALT+glisser</b> → tourner (PC)</p>
+    <p>👆 <b>1 doigt</b> → tourner (tactile)</p>
+    <p>👆 <b>2 doigts</b> → zoom (tactile)</p>
+    <p>⌨️ <b>R</b> → reset</p>
+    <p>⌨️ <b>F</b> → plein écran</p>
+</div>
+        <!-- Reset -->
+        <button id="btn-reset" onclick="reset()">
+            ↺ RESET
+        </button>
+        <!-- Boutons orbites -->
+<!-- <div id="orbites">
+    <p class="orbite-titre">ORBITES AUTO</p>
+    <button class="btn-orbite"
+            onclick="ajouterOrbite(0,1,0.35)">
+        🪐 Planète → Étoile
+    </button>
+    <button class="btn-orbite"
+            onclick="ajouterOrbite(1,3,0.15)">
+        🪨 Astéroïde → Planète
+    </button>
+</div> -->
+
+        <!-- Einstein -->
+        <div id="einstein-box">
+           <img src="einstein.jpg" 
+     id="einstein-img" 
+     alt="Einstein">
+            <p id="einstein-nom">Albert Einstein</p>
+            <p id="einstein-eq">E = mc²</p>
+        </div>
+
+    </div>
+
+    <!-- ZONE SIMULATION -->
+    <div id="simulation">
+        <canvas id="canvas"></canvas>
+
+        <!-- Info overlay -->
+        <div id="info-overlay">
+            <span id="info-objets">Objets : 0</span>
+            <span id="info-fps">FPS : 60</span>
+        </div>
+     
+    </div>
+
+    <script src="shaders.js"></script>
+    <script src="simulation.js"></script>
+</body>
+</html>

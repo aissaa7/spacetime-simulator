@@ -1,0 +1,293 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Share+Tech+Mono&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    cursor: none !important;
+}
+
+body {
+    background: #020408;
+    color: #a0c8e0;
+    font-family: 'Share Tech Mono', monospace;
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* ── MENU ─────────────────────────────── */
+#menu {
+    width: 185px;
+    min-width: 185px;
+    background: linear-gradient(
+        180deg, #050d1a 0%, #030810 100%);
+    border-right: 1px solid rgba(0,150,255,0.2);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 7px;
+    gap: 7px;
+    overflow-y: auto;
+}
+
+/* ── TITRE ────────────────────────────── */
+#titre {
+    text-align: center;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(0,150,255,0.2);
+    width: 100%;
+}
+
+#titre h1 {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.0rem;
+    font-weight: 700;
+    color: #00d4ff;
+    letter-spacing: 0.15em;
+    text-shadow: 0 0 15px rgba(0,212,255,0.6);
+}
+
+#titre h2 {
+    font-size: 0.72rem;
+    color: #0088aa;
+    letter-spacing: 0.2em;
+    margin-top: 2px;
+}
+
+#titre p {
+    font-size: 0.5rem;
+    color: rgba(160,200,224,0.4);
+    margin-top: 3px;
+    letter-spacing: 0.08em;
+}
+
+/* ── BOUTONS OBJETS ───────────────────── */
+#boutons {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    width: 100%;
+}
+
+.btn-objet {
+    width: 100%;
+    background: rgba(0,20,50,0.6);
+    border: 1px solid rgba(0,150,255,0.2);
+    border-radius: 4px;
+    color: #a0c8e0;
+    cursor: none;
+    padding: 8px 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+    font-family: 'Share Tech Mono', monospace;
+}
+
+.btn-objet:hover {
+    background: rgba(0,40,100,0.6);
+    border-color: rgba(0,200,255,0.4);
+    transform: translateX(2px);
+}
+
+.btn-objet.actif {
+    background: rgba(0,50,120,0.7);
+    border-color: #00d4ff;
+    box-shadow: 0 0 8px rgba(0,212,255,0.2);
+}
+
+.btn-objet span {
+    font-size: 0.72rem;
+    font-weight: bold;
+    letter-spacing: 0.06em;
+}
+
+.btn-objet small {
+    font-size: 0.56rem;
+    color: rgba(160,200,224,0.4);
+    display: block;
+    line-height: 1.2;
+}
+
+/* ── ICÔNES ───────────────────────────── */
+.icone {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.0rem;
+    flex-shrink: 0;
+}
+
+.etoile {
+    background: radial-gradient(circle, #ffdd44, #ff8800);
+    box-shadow: 0 0 6px rgba(255,200,0,0.6);
+}
+
+.planete {
+    background: radial-gradient(circle, #4488ff, #0022aa);
+    box-shadow: 0 0 6px rgba(0,100,255,0.4);
+}
+
+.trou {
+    background: radial-gradient(circle, #220033, #000);
+    color: #aa44ff;
+    border: 1px solid #6600aa;
+    box-shadow: 0 0 6px rgba(150,0,255,0.5);
+}
+
+.asteroide {
+    background: radial-gradient(circle, #886644, #443322);
+    color: #ffaa66;
+    box-shadow: 0 0 4px rgba(150,100,50,0.3);
+}
+
+/* ── INSTRUCTIONS ─────────────────────── */
+#instructions {
+    width: 100%;
+    padding: 7px;
+    border: 1px solid rgba(0,150,255,0.1);
+    border-radius: 4px;
+    background: rgba(0,10,30,0.5);
+}
+
+#instructions p {
+    font-size: 0.52rem;
+    color: rgba(160,200,224,0.6);
+    margin-bottom: 2px;
+    line-height: 1.4;
+}
+
+#instructions b {
+    color: #00d4ff;
+}
+
+/* ── RESET ────────────────────────────── */
+#btn-reset {
+    width: 100%;
+    background: rgba(50,0,0,0.5);
+    border: 1px solid rgba(255,50,50,0.3);
+    border-radius: 4px;
+    color: #ff6666;
+    cursor: none;
+    padding: 7px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    transition: all 0.2s;
+}
+
+#btn-reset:hover {
+    background: rgba(100,0,0,0.6);
+    border-color: #ff4444;
+    box-shadow: 0 0 8px rgba(255,0,0,0.2);
+}
+
+/* ── EINSTEIN ─────────────────────────── */
+#einstein-box {
+    text-align: center;
+    padding: 8px 6px;
+    border-top: 1px solid rgba(0,150,255,0.15);
+    width: 100%;
+    margin-top: auto;
+}
+
+#einstein-img {
+    width: 90px;
+    border-radius: 8px;
+    filter: drop-shadow(0 0 10px rgba(0,212,255,0.35));
+    animation: float 3s ease-in-out infinite alternate;
+}
+
+@keyframes float {
+    0%   { transform: translateY(0px);  }
+    100% { transform: translateY(-5px); }
+}
+
+#einstein-nom {
+    font-size: 0.6rem;
+    color: rgba(160,200,224,0.7);
+    margin-top: 5px;
+    letter-spacing: 0.1em;
+}
+
+#einstein-eq {
+    font-size: 0.78rem;
+    color: #00d4ff;
+    font-style: italic;
+    margin-top: 2px;
+    text-shadow: 0 0 8px rgba(0,212,255,0.4);
+}
+
+/* ── SIMULATION ───────────────────────── */
+#simulation {
+    flex: 1;
+    position: relative;
+    background: #010306;
+}
+
+#canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+/* ── INFO OVERLAY ─────────────────────── */
+#info-overlay {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    display: flex;
+    gap: 15px;
+    font-size: 0.6rem;
+    color: rgba(0,212,255,0.5);
+    pointer-events: none;
+    font-family: 'Share Tech Mono', monospace;
+}
+
+/* ── PANEL ÉDUCATIF ───────────────────── */
+#panel-edu {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,10,30,0.88);
+    border: 1px solid rgba(0,212,255,0.25);
+    border-radius: 8px;
+    padding: 10px 18px;
+    max-width: 480px;
+    width: 85%;
+    text-align: center;
+    backdrop-filter: blur(8px);
+    transition: opacity 0.5s ease;
+    font-family: 'Share Tech Mono', monospace;
+}
+
+#edu-titre {
+    font-size: 0.65rem;
+    color: #00d4ff;
+    letter-spacing: 0.12em;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+#edu-texte {
+    font-size: 0.6rem;
+    color: rgba(160,200,224,0.8);
+    line-height: 1.6;
+    white-space: pre-line;
+}
+
+/* ── SCROLLBAR ────────────────────────── */
+#menu::-webkit-scrollbar { width: 3px; }
+#menu::-webkit-scrollbar-track { background: transparent; }
+#menu::-webkit-scrollbar-thumb {
+    background: rgba(0,150,255,0.2);
+    border-radius: 2px;
+}

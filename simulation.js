@@ -349,33 +349,40 @@ let objets = [];
 let typeSelectionne = 0;
 
 const CONFIG = [
-    // Étoile — très massive, très grande
+    // 0 - Étoile
     {
         masse:   0.15,
         couleur: [1.0, 0.85, 0.2],
         rayon:   0.12,
         nom:     'Étoile'
     },
-    // Planète — masse et taille moyennes
+    // 1 - Planète
     {
         masse:   0.06,
         couleur: [0.2, 0.5, 1.0],
         rayon:   0.07,
         nom:     'Planète'
     },
-    // Trou noir — extrêmement massif
+    // 2 - Trou noir
     {
         masse:   0.45,
         couleur: [0.5, 0.0, 1.0],
         rayon:   0.0,
         nom:     'Trou Noir'
     },
-    // Astéroïde — très léger, très petit
+    // 3 - Astéroïde
     {
         masse:   0.008,
         couleur: [0.6, 0.4, 0.2],
         rayon:   0.02,
         nom:     'Astéroïde'
+    },
+    // 4 - Trou de ver ← NOUVEAU !
+    {
+        masse:   0.05,
+        couleur: [0.0, 1.0, 0.8],
+        rayon:   0.08,
+        nom:     'Trou de Ver'
     }
 ];
 
@@ -384,7 +391,8 @@ function selectionner(t) {
     document.querySelectorAll('.btn-objet')
             .forEach(b => b.classList.remove('actif'));
     const ids = ['btn-etoile','btn-planete',
-                 'btn-trou','btn-asteroide'];
+             'btn-trou','btn-asteroide',
+             'btn-trou-ver'];
     document.getElementById(ids[t])
             .classList.add('actif');
 }
@@ -667,6 +675,63 @@ function mettreAJourFlashs() {
 //                 'v =', vitOrbitale.toFixed(4));
 // }
 
+// ═══════════════════════════════════════
+//   TROU DE VER
+// ═══════════════════════════════════════
+
+// Trouver les paires de trous de ver
+function getTrousDeVer() {
+    return objets.filter(o => o.type === 4);
+}
+
+// Téléporter les objets proches
+function gererTrouDeVer() {
+    const vers = objets.filter(o => o.type === 4);
+    if (vers.length < 2) return;
+
+    for (const obj of objets) {
+        if (obj.type === 4) continue;
+        if (obj.enTeleportation) continue;
+
+        for (let i = 0; i < vers.length; i++) {
+            const v1 = vers[i];
+            const dx = obj.x - v1.x;
+            const dz = obj.y - v1.y;
+            const dist = Math.sqrt(dx*dx + dz*dz);
+
+            if (dist < 0.06) {
+                // Trouver le partenaire
+                let v2   = null;
+                let minD = 999;
+                for (let j = 0; j < vers.length; j++) {
+                    if (vers[j] === v1) continue;
+                    const d = Math.sqrt(
+                        Math.pow(vers[j].x-v1.x,2)+
+                        Math.pow(vers[j].y-v1.y,2));
+                    if (d < minD) { minD=d; v2=vers[j]; }
+                }
+
+                if (v2) {
+                    // Téléportation !
+                    const angleSort = Math.random()*Math.PI*2;
+                    const distSort  = 0.15;
+                    obj.x  = v2.x + Math.cos(angleSort)*distSort;
+                    obj.y  = v2.y + Math.sin(angleSort)*distSort;
+                    const vitSort = 0.008;
+                    obj.vx = Math.cos(angleSort)*vitSort;
+                    obj.vy = Math.sin(angleSort)*vitSort;
+                    obj.enTeleportation = true;
+                    setTimeout(() => {
+                        obj.enTeleportation = false;
+                    }, 500);
+                    creerFlash(v1.x, v1.y);
+                    creerFlash(v2.x, v2.y);
+                }
+                break;
+            }
+        }
+    }
+}
 // ── Physique
 function physique() {
     const dt     = 0.0005;
@@ -713,19 +778,32 @@ function physique() {
     const az = new Array(objets.length).fill(0);
 
     for(let i=0;i<objets.length;i++)
-    for(let j=i+1;j<objets.length;j++) {
-        const dx = objets[j].x-objets[i].x;
-        const dz = objets[j].y-objets[i].y;
-        const d  = Math.max(
-                   Math.sqrt(dx*dx+dz*dz),0.05);
-        const f  = objets[i].masse
-                 * objets[j].masse/(d*d);
-        const nx = dx/d, nz = dz/d;
+for(let j=i+1;j<objets.length;j++) {
+    const ti = objets[i].type;
+    const tj = objets[j].type;
+
+    // Deux trous de ver ne s'attirent pas
+    if (ti === 4 && tj === 4) continue;
+
+    const dx = objets[j].x-objets[i].x;
+    const dz = objets[j].y-objets[i].y;
+    const d  = Math.max(
+               Math.sqrt(dx*dx+dz*dz),0.05);
+    const f  = objets[i].masse
+             * objets[j].masse/(d*d);
+    const nx = dx/d, nz = dz/d;
+
+    // Trou de ver attire les autres
+    // mais les autres ne l'attirent PAS
+    if (ti !== 4) {
         ax[i] += f*nx/objets[i].masse;
         az[i] += f*nz/objets[i].masse;
+    }
+    if (tj !== 4) {
         ax[j] -= f*nx/objets[j].masse;
         az[j] -= f*nz/objets[j].masse;
     }
+}
 
     // ── Appliquer — PAS d'amortissement !
     // (l'amortissement détruit les orbites)
@@ -790,6 +868,7 @@ function boucle(t) {
 
     // ── Physique
     physique();
+    gererTrouDeVer();
     mettreAJourFlashs(); // ← AJOUT étape 4
 
     gl.clearColor(0.01,0.01,0.03,1);
@@ -860,6 +939,55 @@ for(const o of objets) {
         }
         continue; // pas de sphère !
     }
+    // ── Trou de ver = deux entonnoirs lumineux
+if (o.type === 4) {
+    const t2 = Date.now() / 1000;
+
+    // Anneaux concentriques qui tournent
+    for (let k = 0; k < 5; k++) {
+        const rk    = 0.03 + k * 0.018;
+        const alpha = 1.0 - k * 0.15;
+        const pts   = [];
+        const segs  = 48;
+
+        for (let i = 0; i <= segs; i++) {
+            const a = 2*Math.PI*i/segs
+                    + t2 * (k%2===0 ? 1 : -1);
+            // Entonnoir : plus on est loin
+            // plus on monte
+            const yy = oy + k * 0.015;
+            pts.push(
+                o.x + Math.cos(a)*rk,
+                yy,
+                o.y + Math.sin(a)*rk
+            );
+        }
+        drawBuffer(pts, gl.LINE_LOOP,
+            0.0 * alpha,
+            1.0 * alpha,
+            0.8 * alpha,
+            pts.length/3);
+    }
+
+    // Rayon central lumineux vertical
+    const ptsRayon = [];
+    for (let k = 0; k <= 20; k++) {
+        const yy = oy - 0.3 + k * 0.03;
+        const rr = 0.02 * Math.sin(
+                   k * Math.PI / 20);
+        const a  = Date.now()/200 + k*0.5;
+        ptsRayon.push(
+            o.x + Math.cos(a)*rr,
+            yy,
+            o.y + Math.sin(a)*rr
+        );
+    }
+    drawBuffer(ptsRayon, gl.LINE_STRIP,
+        0.0, 1.0, 0.8,
+        ptsRayon.length/3);
+
+    continue;
+}
 
     // ── Rayon dynamique selon masse
     const r = Math.min(

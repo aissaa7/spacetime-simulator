@@ -291,3 +291,11 @@ body {
     background: rgba(0,150,255,0.2);
     border-radius: 2px;
 }
+
+.trou-ver {
+    background: radial-gradient(
+        circle, #004444, #001122);
+    color: #00ffcc;
+    border: 1px solid #00ffcc;
+    box-shadow: 0 0 8px rgba(0,255,200,0.5);
+}

@@ -349,43 +349,42 @@ let objets = [];
 let typeSelectionne = 0;
 
 const CONFIG = [
-    // 0 - Étoile
+    // 0 - Étoile — très massive, fixe
     {
         masse:   0.15,
         couleur: [1.0, 0.85, 0.2],
         rayon:   0.12,
         nom:     'Étoile'
     },
-    // 1 - Planète
+    // 1 - Planète — mobile, moyenne
     {
-        masse:   0.06,
+        masse:   0.02,
         couleur: [0.2, 0.5, 1.0],
         rayon:   0.07,
         nom:     'Planète'
     },
-    // 2 - Trou noir
+    // 2 - Trou noir — extrêmement massif
     {
         masse:   0.45,
         couleur: [0.5, 0.0, 1.0],
         rayon:   0.0,
         nom:     'Trou Noir'
     },
-    // 3 - Astéroïde
+    // 3 - Astéroïde — très léger
     {
-        masse:   0.008,
+        masse:   0.005,
         couleur: [0.6, 0.4, 0.2],
         rayon:   0.02,
         nom:     'Astéroïde'
     },
-    // 4 - Trou de ver ← NOUVEAU !
+    // 4 - Trou de ver
     {
         masse:   0.05,
         couleur: [0.0, 1.0, 0.8],
-        rayon:   0.08,
+        rayon:   0.06,
         nom:     'Trou de Ver'
     }
 ];
-
 function selectionner(t) {
     typeSelectionne = t;
     document.querySelectorAll('.btn-objet')
@@ -694,38 +693,69 @@ function gererTrouDeVer() {
         if (obj.enTeleportation) continue;
 
         for (let i = 0; i < vers.length; i++) {
-            const v1 = vers[i];
-            const dx = obj.x - v1.x;
-            const dz = obj.y - v1.y;
+            const v1   = vers[i];
+            const dx   = obj.x - v1.x;
+            const dz   = obj.y - v1.y;
             const dist = Math.sqrt(dx*dx + dz*dz);
 
             if (dist < 0.06) {
                 // Trouver le partenaire
                 let v2   = null;
                 let minD = 999;
-                for (let j = 0; j < vers.length; j++) {
+                for (let j=0; j<vers.length; j++) {
                     if (vers[j] === v1) continue;
                     const d = Math.sqrt(
                         Math.pow(vers[j].x-v1.x,2)+
                         Math.pow(vers[j].y-v1.y,2));
-                    if (d < minD) { minD=d; v2=vers[j]; }
+                    if (d < minD) {
+                        minD = d;
+                        v2   = vers[j];
+                    }
                 }
 
                 if (v2) {
-                    // Téléportation !
-                    const angleSort = Math.random()*Math.PI*2;
-                    const distSort  = 0.15;
-                    obj.x  = v2.x + Math.cos(angleSort)*distSort;
-                    obj.y  = v2.y + Math.sin(angleSort)*distSort;
-                    const vitSort = 0.008;
-                    obj.vx = Math.cos(angleSort)*vitSort;
-                    obj.vy = Math.sin(angleSort)*vitSort;
+                    // Bloquer pendant traversée
                     obj.enTeleportation = true;
-                    setTimeout(() => {
-                        obj.enTeleportation = false;
-                    }, 500);
+                    obj.tunnelProgress  = 0.0;
+                    obj.vx = 0;
+                    obj.vy = 0;
+
+                    // Destination de sortie
+                    const angleSort = Math.random()
+                                    * Math.PI * 2;
+                    obj.tunnelDest = {
+                        x:     v2.x,
+                        y:     v2.y,
+                        angle: angleSort
+                    };
+
                     creerFlash(v1.x, v1.y);
-                    creerFlash(v2.x, v2.y);
+
+                    // Téléporter après traversée
+                    setTimeout(() => {
+                        if (!obj.tunnelDest) return;
+
+                        const a = obj.tunnelDest.angle;
+
+                        // Éjecter avec force suffisante
+                        // pour s'éloigner avant que
+                        // la gravité reprenne !
+                        const vitSort = 0.025;
+                        obj.x  = obj.tunnelDest.x
+                                + Math.cos(a)*0.12;
+                        obj.y  = obj.tunnelDest.y
+                                + Math.sin(a)*0.12;
+                        obj.vx = Math.cos(a)*vitSort;
+                        obj.vy = Math.sin(a)*vitSort;
+
+                        obj.tunnelDest      = undefined;
+                        obj.tunnelProgress  = undefined;
+                        obj.enTeleportation = false;
+
+                        creerFlash(
+                            obj.tunnelDest?.x || obj.x,
+                            obj.tunnelDest?.y || obj.y);
+                    }, 1000);
                 }
                 break;
             }
@@ -734,115 +764,139 @@ function gererTrouDeVer() {
 }
 // ── Physique
 function physique() {
-    const dt     = 0.0005;
-    const rayons = [0.18, 0.06, 0.0, 0.015];
-    const del    = new Array(objets.length)
-                   .fill(false);
+    const dt = 0.0005;
+
+    // Rayons de collision pour tous les types
+    // incluant trou noir et trou de ver !
+    const rayons = [0.12, 0.07, 0.10, 0.02, 0.06];
+
+    const del = new Array(objets.length).fill(false);
 
     // ── Collisions
-    for(let i=0;i<objets.length;i++)
-    for(let j=i+1;j<objets.length;j++) {
-        if(del[i]||del[j]) continue;
-        if(objets[i].type===2||
-           objets[j].type===2) continue;
-        const dx = objets[j].x-objets[i].x;
-        const dz = objets[j].y-objets[i].y;
-        const d  = Math.sqrt(dx*dx+dz*dz);
+    for(let i=0; i<objets.length; i++)
+    for(let j=i+1; j<objets.length; j++) {
+        if(del[i] || del[j]) continue;
+
+        // Les trous de ver ne fusionnent pas
+        if(objets[i].type===4 ||
+           objets[j].type===4) continue;
+
+        const dx = objets[j].x - objets[i].x;
+        const dz = objets[j].y - objets[i].y;
+        const d  = Math.sqrt(dx*dx + dz*dz);
         const s  = rayons[objets[i].type]
                  + rayons[objets[j].type];
-        if(d < s*0.5) {
-            if(objets[i].masse>=objets[j].masse) {
-                objets[i].couleur=melangerCouleurs(
+
+        if(d < s * 0.5) {
+            // Le plus massif absorbe le plus léger
+            if(objets[i].masse >= objets[j].masse) {
+                objets[i].couleur = melangerCouleurs(
                     CONFIG[objets[i].type].couleur,
                     CONFIG[objets[j].type].couleur,
-                    objets[i].masse,objets[j].masse);
-                objets[i].masse+=objets[j].masse*0.5;
-                del[j]=true;
-                creerFlash(objets[i].x,objets[i].y);
+                    objets[i].masse, objets[j].masse);
+                objets[i].masse += objets[j].masse*0.5;
+                del[j] = true;
+                creerFlash(objets[i].x, objets[i].y);
             } else {
-                objets[j].couleur=melangerCouleurs(
+                objets[j].couleur = melangerCouleurs(
                     CONFIG[objets[j].type].couleur,
                     CONFIG[objets[i].type].couleur,
-                    objets[j].masse,objets[i].masse);
-                objets[j].masse+=objets[i].masse*0.5;
-                del[i]=true;
-                creerFlash(objets[j].x,objets[j].y);
-            
+                    objets[j].masse, objets[i].masse);
+                objets[j].masse += objets[i].masse*0.5;
+                del[i] = true;
+                creerFlash(objets[j].x, objets[j].y);
             }
         }
     }
-    objets=objets.filter((_,i)=>!del[i]);
+    objets = objets.filter((_,i) => !del[i]);
 
     // ── Forces gravitationnelles
     const ax = new Array(objets.length).fill(0);
     const az = new Array(objets.length).fill(0);
 
-    for(let i=0;i<objets.length;i++)
-for(let j=i+1;j<objets.length;j++) {
-    const ti = objets[i].type;
-    const tj = objets[j].type;
+    for(let i=0; i<objets.length; i++)
+    for(let j=i+1; j<objets.length; j++) {
+        const ti = objets[i].type;
+        const tj = objets[j].type;
 
-    // Deux trous de ver ne s'attirent pas
-    if (ti === 4 && tj === 4) continue;
+        // Deux trous de ver ne s'attirent pas
+        if(ti===4 && tj===4) continue;
 
-    const dx = objets[j].x-objets[i].x;
-    const dz = objets[j].y-objets[i].y;
-    const d  = Math.max(
-               Math.sqrt(dx*dx+dz*dz),0.05);
-    const f  = objets[i].masse
-             * objets[j].masse/(d*d);
-    const nx = dx/d, nz = dz/d;
+        const dx = objets[j].x - objets[i].x;
+        const dz = objets[j].y - objets[i].y;
+        const d  = Math.max(
+                   Math.sqrt(dx*dx+dz*dz), 0.05);
 
-    // Trou de ver attire les autres
-    // mais les autres ne l'attirent PAS
-    if (ti !== 4) {
-        ax[i] += f*nx/objets[i].masse;
-        az[i] += f*nz/objets[i].masse;
+        // F = M1 × M2 / d²
+        const f  = objets[i].masse
+                 * objets[j].masse / (d*d);
+        const nx = dx/d;
+        const nz = dz/d;
+
+        // Accélération = F / masse
+        // → petit objet accélère BEAUCOUP plus !
+        // Trou de ver : attire mais n'est pas attiré
+        if(ti !== 4) {
+            // amax proportionnel à 1/masse
+            // → léger accélère plus que lourd !
+            const amaxI = 0.008 /
+                  Math.sqrt(objets[i].masse);
+            const accI  = Math.min(
+                  f/objets[i].masse, amaxI);
+            ax[i] += accI * nx;
+            az[i] += accI * nz;
+        }
+        if(tj !== 4) {
+            const amaxJ = 0.008 /
+                  Math.sqrt(objets[j].masse);
+            const accJ  = Math.min(
+                  f/objets[j].masse, amaxJ);
+            ax[j] -= accJ * nx;
+            az[j] -= accJ * nz;
+        }
     }
-    if (tj !== 4) {
-        ax[j] -= f*nx/objets[j].masse;
-        az[j] -= f*nz/objets[j].masse;
-    }
-}
 
-    // ── Appliquer — PAS d'amortissement !
-    // (l'amortissement détruit les orbites)
-    for(let i=0;i<objets.length;i++) {
-        const amax = 0.015;
-        ax[i] = Math.max(-amax,Math.min(amax,ax[i]));
-        az[i] = Math.max(-amax,Math.min(amax,az[i]));
+    // ── Appliquer les accélérations
+    for(let i=0; i<objets.length; i++) {
+        // Objet en téléportation → immobile
+        if(objets[i].enTeleportation) continue;
 
-        objets[i].vx += ax[i]*dt;
-        objets[i].vy += az[i]*dt;
+        objets[i].vx += ax[i] * dt;
+        objets[i].vy += az[i] * dt;
 
-        // Vitesse max selon masse
-        const vmax = 0.015/
-              Math.sqrt(objets[i].masse*8);
+        // Vitesse max inversement proportionnelle
+        // à la masse → léger va plus vite !
+        const vmax = 0.012 /
+              Math.sqrt(objets[i].masse * 5);
         objets[i].vx = Math.max(-vmax,
-                       Math.min(vmax,objets[i].vx));
+                       Math.min(vmax, objets[i].vx));
         objets[i].vy = Math.max(-vmax,
-                       Math.min(vmax,objets[i].vy));
+                       Math.min(vmax, objets[i].vy));
 
         objets[i].x += objets[i].vx;
         objets[i].y += objets[i].vy;
 
-        // Bords — rebondir
-        if(objets[i].x<-0.95){
-            objets[i].x=-0.95;
-            objets[i].vx*=-0.8;}
-        if(objets[i].x> 0.95){
-            objets[i].x= 0.95;
-            objets[i].vx*=-0.8;}
-        if(objets[i].y<-0.95){
-            objets[i].y=-0.95;
-            objets[i].vy*=-0.8;}
-        if(objets[i].y> 0.95){
-            objets[i].y= 0.95;
-            objets[i].vy*=-0.8;}
+        // Bords
+        if(objets[i].x < -0.95) {
+            objets[i].x  = -0.95;
+            objets[i].vx *= -0.6;
+        }
+        if(objets[i].x >  0.95) {
+            objets[i].x  =  0.95;
+            objets[i].vx *= -0.6;
+        }
+        if(objets[i].y < -0.95) {
+            objets[i].y  = -0.95;
+            objets[i].vy *= -0.6;
+        }
+        if(objets[i].y >  0.95) {
+            objets[i].y  =  0.95;
+            objets[i].vy *= -0.6;
+        }
     }
 
     document.getElementById('info-objets')
-            .textContent=`Objets : ${objets.length}`;
+            .textContent = `Objets : ${objets.length}`;
 }
 
 // ── Dessiner buffer
@@ -1026,7 +1080,146 @@ if (o.type === 4) {
                    0.2,
                    pts2.length/3);
     }
+// ── Tunnel entre trous de ver
+const vers = objets.filter(o => o.type === 4);
+if (vers.length >= 2) {
+    for (let i = 0; i < vers.length-1; i++) {
+        for (let j = i+1; j < vers.length; j++) {
+            const v1 = vers[i];
+            const v2 = vers[j];
 
+            // Y des deux trous
+            let oy1 = 0, oy2 = 0;
+            for(const s of objets) {
+                const dx1=v1.x-s.x, dz1=v1.y-s.y;
+                const d1=Math.max(
+                    Math.sqrt(dx1*dx1+dz1*dz1),0.01);
+                let def1=s.masse/(d1*d1);
+                def1=Math.min(def1,
+                     Math.max(s.masse*20,0.5));
+                oy1-=def1*Math.max(
+                     s.masse*12,0.8)*0.08;
+
+                const dx2=v2.x-s.x, dz2=v2.y-s.y;
+                const d2=Math.max(
+                    Math.sqrt(dx2*dx2+dz2*dz2),0.01);
+                let def2=s.masse/(d2*d2);
+                def2=Math.min(def2,
+                     Math.max(s.masse*20,0.5));
+                oy2-=def2*Math.max(
+                     s.masse*12,0.8)*0.08;
+            }
+
+            const t2    = Date.now()/1000;
+            const segT  = 30;
+            const nbAnn = 20;
+
+            // ── Fonction courbure du tunnel
+            // Courbe vers le bas au milieu
+            // comme un vrai trou de ver !
+            function tunnelPos(alpha) {
+                const px = v1.x+(v2.x-v1.x)*alpha;
+                const pz = v1.y+(v2.y-v1.y)*alpha;
+
+                // Courbure vers le bas
+                // (parabole au milieu)
+                const courbure = 0.25 *
+                    Math.sin(alpha*Math.PI);
+                const py = oy1+(oy2-oy1)*alpha
+                         - courbure;
+
+                // Rayon : petit aux extrémités,
+                // plus large au milieu
+                const r = 0.02 +
+                    0.04*Math.sin(alpha*Math.PI);
+
+                return {px, py, pz, r};
+            }
+
+            // ── Anneaux du tunnel
+            for (let k = 0; k <= nbAnn; k++) {
+                const alpha = k/nbAnn;
+                const {px,py,pz,r} = tunnelPos(alpha);
+
+                const ptsAnn = [];
+                for (let a = 0; a <= segT; a++) {
+                    const angle = 2*Math.PI*a/segT
+                                + t2*1.5;
+                    ptsAnn.push(
+                        px+Math.cos(angle)*r,
+                        py,
+                        pz+Math.sin(angle)*r
+                    );
+                }
+
+                const pulse = 0.4+0.4*Math.sin(
+                    t2*3+alpha*Math.PI*4);
+                const bright = 0.4+pulse*0.5;
+
+                drawBuffer(ptsAnn, gl.LINE_LOOP,
+                    0.0, bright, bright*0.8,
+                    ptsAnn.length/3);
+            }
+
+            // ── Lignes longitudinales
+            const nbLignes = 8;
+            for (let l = 0; l < nbLignes; l++) {
+                const angleL = 2*Math.PI*l/nbLignes
+                             + t2*0.3;
+                const ptsLigne = [];
+
+                for (let k = 0; k <= nbAnn; k++) {
+                    const alpha = k/nbAnn;
+                    const {px,py,pz,r} =
+                          tunnelPos(alpha);
+                    ptsLigne.push(
+                        px+Math.cos(angleL)*r,
+                        py,
+                        pz+Math.sin(angleL)*r
+                    );
+                }
+
+                const pulse = 0.25+0.2*Math.sin(
+                    t2*2+l*0.8);
+                drawBuffer(ptsLigne, gl.LINE_STRIP,
+                    0.0, pulse, pulse*0.8,
+                    ptsLigne.length/3);
+            }
+
+            // ── Objet en traversée du tunnel
+            // Quand un objet est téléporté,
+            // on l'anime dans le tunnel !
+            for (const obj of objets) {
+                if (!obj.enTeleportation) continue;
+                if (obj.type === 4) continue;
+
+                // Progression dans le tunnel
+                if (obj.tunnelProgress === undefined)
+                    obj.tunnelProgress = 0;
+
+                obj.tunnelProgress += 0.02;
+
+                if (obj.tunnelProgress <= 1.0) {
+                    const {px,py,pz} = tunnelPos(
+                        obj.tunnelProgress);
+
+                    // Dessiner l'objet dans le tunnel
+                    const cfg = CONFIG[obj.type];
+                    const col = obj.couleur||cfg.couleur;
+                    const r   = cfg.rayon * 0.6;
+                    const sp  = creerSphere(
+                                px,py,pz,r,8);
+
+                    const seg2=8, pbc2=seg2+1;
+                    drawBuffer(sp,gl.LINE_LOOP,
+                        col[0],col[1],col[2],pbc2);
+                } else {
+                    obj.tunnelProgress = undefined;
+                }
+            }
+        }
+    }
+}
     requestAnimationFrame(boucle);
 }
 

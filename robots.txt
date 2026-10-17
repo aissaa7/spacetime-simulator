@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://aissaa7.github.io/spacetime-simulator/sitemap.xml
